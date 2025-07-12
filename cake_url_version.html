@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎂 Birthday Cake with Shareable Candles</title>
+<style>
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #fce4ec; font-family: sans-serif; }
+  #cake { width: 300px; height: 200px; background: #d2691e; border-radius: 10px; position: relative; margin-bottom: 10px; }
+  .candle { width: 6px; height: 30px; background: #fff; position: absolute; bottom: 100%; }
+  .flame { width: 8px; height: 8px; background: yellow; border-radius: 50%; position: absolute; top: -8px; left: -1px; }
+  #linkDisplay { font-size: 14px; color: #333; word-break: break-all; max-width: 90%; text-align: center; }
+</style>
+</head>
+<body>
+<div id="cake"></div>
+<div id="linkDisplay">Current link: loading...</div>
+
+<script>
+const cake = document.getElementById('cake');
+const linkDisplay = document.getElementById('linkDisplay');
+let candles = [];
+
+// Read candles from URL
+const params = new URLSearchParams(window.location.search);
+const candleStr = params.get('candles');
+if (candleStr) {
+  candles = candleStr.split(',').map(pos => parseFloat(pos));
+  drawCandles();
+}
+updateLinkDisplay();
+
+// Add candle on click
+cake.addEventListener('click', e => {
+  const rect = cake.getBoundingClientRect();
+  const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+  candles.push(xPercent);
+  updateURL();
+  drawCandles();
+  updateLinkDisplay();
+});
+
+function drawCandles() {
+  cake.querySelectorAll('.candle').forEach(el => el.remove());
+  candles.forEach(x => {
+    const c = document.createElement('div');
+    c.className = 'candle';
+    c.style.left = `calc(${x}% - 3px)`;
+    const flame = document.createElement('div');
+    flame.className = 'flame';
+    c.appendChild(flame);
+    cake.appendChild(c);
+  });
+}
+
+function updateURL() {
+  const str = candles.map(x => x.toFixed(1)).join(',');
+  const newUrl = window.location.origin + window.location.pathname + '?candles=' + str;
+  window.history.replaceState({}, '', newUrl);
+}
+
+function updateLinkDisplay() {
+  linkDisplay.textContent = "Current link: " + window.location.href;
+}
+</script>
+</body>
+</html>
