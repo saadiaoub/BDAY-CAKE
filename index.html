@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎂 Birthday Cake with Shareable Candles</title>
+<title>🎂 Birthday Cake with Blow Effect</title>
 <style>
   body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #fce4ec; font-family: sans-serif; }
   #cake { width: 300px; height: 200px; background: #d2691e; border-radius: 10px; position: relative; margin-bottom: 10px; }
@@ -15,11 +15,11 @@
 <body>
 <div id="cake"></div>
 <div id="linkDisplay">Current link: loading...</div>
-
 <script>
 const cake = document.getElementById('cake');
 const linkDisplay = document.getElementById('linkDisplay');
 let candles = [];
+let blownOut = false;
 
 // Read candles from URL
 const params = new URLSearchParams(window.location.search);
@@ -35,6 +35,7 @@ cake.addEventListener('click', e => {
   const rect = cake.getBoundingClientRect();
   const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
   candles.push(xPercent);
+  blownOut = false; // reset flames when adding new candle
   updateURL();
   drawCandles();
   updateLinkDisplay();
@@ -46,9 +47,11 @@ function drawCandles() {
     const c = document.createElement('div');
     c.className = 'candle';
     c.style.left = `calc(${x}% - 3px)`;
-    const flame = document.createElement('div');
-    flame.className = 'flame';
-    c.appendChild(flame);
+    if (!blownOut) {
+      const flame = document.createElement('div');
+      flame.className = 'flame';
+      c.appendChild(flame);
+    }
     cake.appendChild(c);
   });
 }
@@ -62,6 +65,37 @@ function updateURL() {
 function updateLinkDisplay() {
   linkDisplay.textContent = "Current link: " + window.location.href;
 }
+
+// Blow detection
+async function setupMic() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(stream);
+    const analyser = audioCtx.createAnalyser();
+    source.connect(analyser);
+    const data = new Uint8Array(analyser.fftSize);
+
+    function checkVolume() {
+      analyser.getByteTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) {
+        sum += Math.abs(data[i] - 128);
+      }
+      const volume = sum / data.length;
+      if (volume > 10 && !blownOut) { // adjust threshold if needed
+        blownOut = true;
+        drawCandles();
+      }
+      requestAnimationFrame(checkVolume);
+    }
+    checkVolume();
+  } catch (err) {
+    console.error('Mic access denied or error:', err);
+  }
+}
+setupMic();
 </script>
 </body>
 </html>
+
