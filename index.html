@@ -272,6 +272,9 @@ body {
 </head>
 
 <body>
+  <audio id="birthdaySong" preload="auto">
+  <source src="birthday-song.mp3" type="audio/mpeg">
+</audio>
 <div class="scene">
   <div id="cake">
     <div class="cake-body"></div>
@@ -394,6 +397,10 @@ function blowOut() {
   drawCandles();
   message.style.display = 'block';
   createSparkles();
+
+  const song = document.getElementById('birthdaySong');
+  song.currentTime = 0;
+  song.play();
 }
 
 /* Magical sparkle burst after the flames go out. */
